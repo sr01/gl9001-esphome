@@ -1,0 +1,105 @@
+substitutions:
+  api_password: password
+  ota_password: password
+  wifi_ssid: ssid
+  wifi_password: password
+  device_ip_address: 0.0.0.0
+
+esphome:
+  name: gl9001-device
+  platform: ESP32
+  board: nodemcu-32s
+  includes:
+    - gl9001_node.h
+    - gl9001_node.cpp
+    - gl9001_time_sensor.h
+    - gl9001_time_sensor.cpp
+    - gl9001_faucet_switch.h
+    - gl9001_faucet_switch.cpp
+    - gl9001_open_duration_sensor.h
+    - gl9001_open_duration_sensor.cpp
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: $api_password
+
+ota:
+  password: $ota_password
+  
+wifi:
+  ssid: $wifi_ssid
+  password: $wifi_password
+  use_address: $device_ip_address
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Testnode Fallback Hotspot"
+    password: "8jtHGO7cmniN"
+
+captive_portal:
+
+time:
+  - platform: homeassistant
+    id: esptime
+
+esp32_ble_tracker:
+  scan_parameters:
+    interval: 5s
+    window: 5s
+    duration: 20s
+
+ble_client:
+  - mac_address: D8:96:B0:40:01:90
+    id: gl9001Client
+    on_connect:
+      then:
+        - lambda: |-
+            ESP_LOGD("ble_client_lambda", "Connected to BLE device");
+    on_disconnect:
+      then:
+        - lambda: |-
+            ESP_LOGD("ble_client_lambda", "Disconnected from BLE device");
+
+text_sensor:
+  - platform: custom
+    lambda: |-
+      auto timeSensor = new esphome::gl9001::GL9001TimeSensor();
+      timeSensor->set_time_component(esptime);
+      timeSensor->set_update_interval(5000);
+      timeSensor->set_time_format("%02d:%02d:%02d");
+      App.register_component(timeSensor);
+      gl9001Client->register_ble_node(timeSensor);
+      return {timeSensor};
+    
+    text_sensors:
+      name: "GL9001 Time"
+
+  - platform: custom
+    lambda: |-
+      auto openDurationSensor = new esphome::gl9001::GL9001OpenDurationSensor();
+      openDurationSensor->set_update_interval(1000);
+      App.register_component(openDurationSensor);
+      gl9001Client->register_ble_node(openDurationSensor);
+      return {openDurationSensor};
+    
+    text_sensors:
+      name: "GL9001 Open Duration"      
+      
+switch:
+  - platform: ble_client
+    ble_client_id: gl9001Client
+    name: "Enable GL9001"
+
+  - platform: custom
+    lambda: |-
+      auto gl9001FaucetSwitch = new esphome::gl9001::GL9001FaucetSwitch();
+      gl9001FaucetSwitch->set_update_interval(10000);
+      App.register_component(gl9001FaucetSwitch);
+      gl9001Client->register_ble_node(gl9001FaucetSwitch);
+      return {gl9001FaucetSwitch};
+
+    switches:
+      name: "GL9001 Faucet"

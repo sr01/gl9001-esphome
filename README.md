@@ -1,6 +1,7 @@
 # gl9001-esphome
 
-Galcon 9001BT irrigation controller component for [ESPHome](https://esphome.io/index.html).
+Galcon 9001BT irrigation controller component for [ESPHome](https://esphome.io/index.html).  
+Designed for ESP32 which has a built-in support for wifi and bluetooth.
 
 ## How to build?
 

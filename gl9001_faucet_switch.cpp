@@ -69,12 +69,10 @@ void GL9001FaucetSwitch::gattc_event_handler(esp_gattc_cb_event_t event, esp_gat
         break;
       if (param->read.status != ESP_GATT_OK) {
         ESP_LOGW(TAG, "[%s] Error reading char at handle %d, status=%d", this->get_name().c_str(), param->read.handle,
-                 param->read.status);
+                  param->read.status);
         break;
       }
       if (param->read.handle == this->irrigationStatusHandle) {
-        ESP_LOGI(TAG, "[%s] reading char at handle %d, status=%d, value[0]: %d, len: %d", this->get_name().c_str(),
-                 param->read.handle, param->read.status, (int) param->read.value, param->read.value_len);
         this->status_clear_warning();
         this->publish_state(this->parse_irrigation_status_data(param->read.value, param->read.value_len));
       }
@@ -90,8 +88,6 @@ void GL9001FaucetSwitch::gattc_event_handler(esp_gattc_cb_event_t event, esp_gat
         break;
       }
 
-      ESP_LOGI(TAG, "[%s] writing char event, handle=%d, status=%d", this->get_name().c_str(), param->write.handle,
-               param->write.status);
       break;
     }
     default:
@@ -102,7 +98,7 @@ void GL9001FaucetSwitch::gattc_event_handler(esp_gattc_cb_event_t event, esp_gat
 void GL9001FaucetSwitch::openFaucet() {
   this->heartBeat();
 
-  ESP_LOGI(TAG, "[%s] send open faucet", this->get_name().c_str());
+  ESP_LOGD(TAG, "[%s] send open faucet", this->get_name().c_str());
 
   uint8_t hours = 0;    // TODO: move to config
   uint8_t minutes = 5;  // TODO: move to config
@@ -114,14 +110,14 @@ void GL9001FaucetSwitch::openFaucet() {
   if (status) {
     ESP_LOGE(TAG, "[%s] open faucet failed, status=%d", this->get_name().c_str(), status);
   } else {
-    publish_state(true);  
+    publish_state(true);
   }
 }
 
 void GL9001FaucetSwitch::closeFaucet() {
   this->heartBeat();
 
-  ESP_LOGI(TAG, "[%s] send close faucet", this->get_name().c_str());
+  ESP_LOGD(TAG, "[%s] send close faucet", this->get_name().c_str());
 
   uint8_t data[] = {1, 0, 0, 0, 0, 0, 0};
 
@@ -131,7 +127,7 @@ void GL9001FaucetSwitch::closeFaucet() {
   if (status) {
     ESP_LOGE(TAG, "[%s] close faucet failed, status=%d", this->get_name().c_str(), status);
   } else {
-    publish_state(false);  
+    publish_state(false);
   }
 }
 
@@ -150,12 +146,6 @@ void GL9001FaucetSwitch::readFaucetStatus() {
 bool GL9001FaucetSwitch::parse_irrigation_status_data(uint8_t *value, uint16_t value_len) {
   if (value_len >= 5) {
     bool open = (value[0] & 1);
-    bool manual = (value[1] & 1);
-    uint8_t hour = value[2];
-    uint8_t minute = value[3];
-    uint8_t second = value[4];
-
-    ESP_LOGI(TAG, "faucet status: open=%d, manual=%d, duration: %02d:%02d:%02d", open, manual, hour, minute, second);
     return open;
   }
 
@@ -163,7 +153,9 @@ bool GL9001FaucetSwitch::parse_irrigation_status_data(uint8_t *value, uint16_t v
 }
 
 void GL9001FaucetSwitch::update() {
-  ESP_LOGW(TAG, "[%s] update", this->get_name().c_str());
+  if (!this->parent()->enabled) {
+    return;
+  }
 
   if (this->node_state != espbt::ClientState::Established) {
     ESP_LOGW(TAG, "[%s] Cannot poll, not connected", this->get_name().c_str());

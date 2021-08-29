@@ -54,8 +54,6 @@ void GL9001OpenDurationSensor::gattc_event_handler(esp_gattc_cb_event_t event, e
         break;
       }
       if (param->read.handle == this->irrigationStatusHandle) {
-        ESP_LOGI(TAG, "[%s] reading char at handle %d, status=%d, value[0]: %d, len: %d", this->get_name().c_str(),
-                 param->read.handle, param->read.status, (int) param->read.value, param->read.value_len);
         this->status_clear_warning();
         this->publish_state(this->parse_irrigation_status_data(param->read.value, param->read.value_len));
       }
@@ -71,8 +69,6 @@ void GL9001OpenDurationSensor::gattc_event_handler(esp_gattc_cb_event_t event, e
         break;
       }
 
-      ESP_LOGD(TAG, "[%s] writing char event, handle=%d, status=%d", this->get_name().c_str(), param->write.handle,
-               param->write.status);
       break;
     }
     default:
@@ -88,8 +84,6 @@ std::string GL9001OpenDurationSensor::parse_irrigation_status_data(uint8_t *valu
     uint8_t minute = value[3];
     uint8_t second = value[4];
 
-    ESP_LOGI(TAG, "faucet status: open=%d, manual=%d, duration: %02d:%02d:%02d", open, manual, hour, minute, second);
-
     char buf[100];
     snprintf(buf, sizeof(buf), this->timeFormat, hour, minute, second);
     return buf;
@@ -99,7 +93,9 @@ std::string GL9001OpenDurationSensor::parse_irrigation_status_data(uint8_t *valu
 }
 
 void GL9001OpenDurationSensor::update() {
-  ESP_LOGW(TAG, "[%s] update", this->get_name().c_str());
+  if (!this->parent()->enabled) {
+    return;
+  }
 
   if (this->node_state != espbt::ClientState::Established) {
     ESP_LOGW(TAG, "[%s] Cannot poll, not connected", this->get_name().c_str());

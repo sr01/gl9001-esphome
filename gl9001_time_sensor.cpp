@@ -66,8 +66,6 @@ void GL9001TimeSensor::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_
         break;
       }
       if (param->read.handle == this->getTimeHandle) {
-        ESP_LOGI(TAG, "[%s] reading char at handle %d, status=%d, value[0]: %d, len: %d", this->get_name().c_str(),
-                 param->read.handle, param->read.status, (int) param->read.value, param->read.value_len);
         this->status_clear_warning();
         this->publish_state(this->parse_data(param->read.value, param->read.value_len));
       }
@@ -83,8 +81,6 @@ void GL9001TimeSensor::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_
         break;
       }
 
-      ESP_LOGD(TAG, "[%s] writing char event, handle=%d, status=%d", this->get_name().c_str(), param->write.handle,
-               param->write.status);
       break;
     }
     default:
@@ -108,7 +104,9 @@ std::string GL9001TimeSensor::parse_data(uint8_t *value, uint16_t value_len) {
 }
 
 void GL9001TimeSensor::update() {
-  ESP_LOGW(TAG, "[%s] update", this->get_name().c_str());
+  if (!this->parent()->enabled) {
+    return;
+  }
 
   if (this->node_state != espbt::ClientState::Established) {
     ESP_LOGW(TAG, "[%s] Cannot poll, not connected", this->get_name().c_str());

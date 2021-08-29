@@ -1,0 +1,91 @@
+custom_fields:
+  connected:
+    card:
+      entity: binary_sensor.gl9001_connection
+      type: custom:button-card
+      show_label: false
+      show_name: false
+      show_icon: true
+      show_state: false
+      size: 15%
+      style: ''
+      styles:
+        card:
+          - background-color: transparent
+          - box-shadow: none
+  enabled:
+    card:
+      type: custom:button-card
+      entity: switch.enable_gl9001
+      show_label: false
+      show_name: false
+      show_icon: false
+      show_entity_picture: true
+      entity_picture: /local/switch_on.png
+      size: 20%
+      state:
+        - entity_picture: /local/switch_on.png
+          value: 'on'
+        - entity_picture: /local/switch_off.png
+          value: 'off'
+      styles:
+        card:
+          - background-color: transparent
+          - box-shadow: none
+  time:
+    card:
+      type: custom:button-card
+      entity: sensor.gl9001_time
+      name: Time
+      show_name: true
+      show_icon: false
+      show_state: true
+      styles:
+        name:
+          - font-size: 0.8em
+        card:
+          - background-color: transparent
+          - box-shadow: none
+  duration:
+    card:
+      type: custom:button-card
+      entity: sensor.gl9001_open_duration
+      name: Duration
+      show_name: true
+      show_icon: false
+      show_state: true
+      styles:
+        name:
+          - font-size: 0.8em
+        card:
+          - background-color: transparent
+          - box-shadow: none
+entity: switch.gl9001_faucet
+hold_action:
+  action: more-info
+name: GL9001
+show_icon: true
+size: 20%
+show_state: false
+show_name: true
+show_label: true
+layout: icon_state_name2nd
+state:
+  - label: Closed
+    icon: mdi:water-pump-off
+    value: 'off'
+  - color: var(--paper-item-icon-active-color)
+    label: Opened
+    icon: mdi:water-pump
+    value: 'on'
+styles:
+  grid:
+    - grid-template-areas: '"connected n enabled" "i i i" "time l duration"'
+    - grid-template-columns: 1fr auto 1fr
+    - grid-template-rows: auto auto auto
+tap_action:
+  action: call-service
+  service: switch.toggle
+  service_data:
+    entity_id: switch.gl9001_faucet
+type: custom:button-card

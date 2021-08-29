@@ -1,4 +1,5 @@
 substitutions:
+  device_name: gl9001-device
   api_password: password
   ota_password: password
   wifi_ssid: ssid
@@ -6,7 +7,7 @@ substitutions:
   device_ip_address: 0.0.0.0
 
 esphome:
-  name: gl9001-device
+  name: $device_name
   platform: ESP32
   board: nodemcu-32s
   includes:
@@ -18,6 +19,8 @@ esphome:
     - gl9001_faucet_switch.cpp
     - gl9001_open_duration_sensor.h
     - gl9001_open_duration_sensor.cpp
+    - gl9001_connection_sensor.h
+    - gl9001_connection_sensor.cpp
 
 # Enable logging
 logger:
@@ -62,6 +65,17 @@ ble_client:
       then:
         - lambda: |-
             ESP_LOGD("ble_client_lambda", "Disconnected from BLE device");
+
+binary_sensor:
+  - platform: custom
+    lambda: |-
+      auto connectionSensor = new esphome::gl9001::GL9001ConnectionSensor();
+      connectionSensor->set_device_class("connectivity");
+      App.register_component(connectionSensor);
+      gl9001Client->register_ble_node(connectionSensor);
+      return {connectionSensor};
+    binary_sensors:
+      name: "GL9001 Connection"
 
 text_sensor:
   - platform: custom

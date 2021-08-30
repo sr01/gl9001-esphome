@@ -55,7 +55,16 @@ void GL9001OpenDurationSensor::gattc_event_handler(esp_gattc_cb_event_t event, e
       }
       if (param->read.handle == this->irrigationStatusHandle) {
         this->status_clear_warning();
-        this->publish_state(this->parse_irrigation_status_data(param->read.value, param->read.value_len));
+        IrrigationStatus status = this->parse_irrigation_status_data(param->read.value, param->read.value_len);
+        if (status.open) {
+          this->prevStatus = status;
+          this->publish_state(this->formatTime(status.hour, status.minute, status.second));
+        } else {
+          if (this->prevStatus.open) {
+            this->prevStatus = status;
+            this->publish_state(this->empty_value);
+          }
+        }
       }
       break;
     }
@@ -76,20 +85,24 @@ void GL9001OpenDurationSensor::gattc_event_handler(esp_gattc_cb_event_t event, e
   }
 }
 
-std::string GL9001OpenDurationSensor::parse_irrigation_status_data(uint8_t *value, uint16_t value_len) {
-  if (value_len >= 5) {
-    bool open = (value[0] & 1);
-    bool manual = (value[1] & 1);
-    uint8_t hour = value[2];
-    uint8_t minute = value[3];
-    uint8_t second = value[4];
+std::string GL9001OpenDurationSensor::formatTime(uint8_t hour, uint8_t minute, uint8_t second) {
+  char buf[100];
+  snprintf(buf, sizeof(buf), this->timeFormat, hour, minute, second);
+  return buf;
+}
 
-    char buf[100];
-    snprintf(buf, sizeof(buf), this->timeFormat, hour, minute, second);
-    return buf;
+IrrigationStatus GL9001OpenDurationSensor::parse_irrigation_status_data(uint8_t *value, uint16_t value_len) {
+  IrrigationStatus status = {false, false, 0, 0, 0};
+
+  if (value_len >= 5) {
+    status.open = (value[0] & 1);
+    status.manual = (value[1] & 1);
+    status.hour = value[2];
+    status.minute = value[3];
+    status.second = value[4];
   }
 
-  return this->empty_value;
+  return status;
 }
 
 void GL9001OpenDurationSensor::update() {

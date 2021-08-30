@@ -14,8 +14,17 @@ namespace gl9001 {
 
 namespace espbt = esphome::esp32_ble_tracker;
 
-class GL9001FaucetSwitch : public PollingComponent, public switch_::Switch, public GL9001Node {
+struct ManualOpenDuration {
+  uint8_t hours;
+  uint8_t minutes;
+};
+
+class GL9001FaucetSwitch : public PollingComponent,
+                           public api::CustomAPIDevice,
+                           public switch_::Switch,
+                           public GL9001Node {
  public:
+  void setup() override;
   void update() override;
   void dump_config() override;
   float get_setup_priority() const override { return setup_priority::DATA; }
@@ -26,6 +35,7 @@ class GL9001FaucetSwitch : public PollingComponent, public switch_::Switch, publ
  protected:
   uint16_t irrigationControlHandle;
   uint16_t irrigationStatusHandle;
+  ManualOpenDuration manualOpenDuration = {0, 5};
 
   espbt::ESPBTUUID irrigation_service_uuid_ = espbt::ESPBTUUID::from_raw(
       (uint8_t *) (const uint8_t[16]){0x1B, 0xC5, 0xD5, 0xA5, 0x02, 0x00, 0xF7, 0xB5, 0xE4, 0x11, 0x4B, 0x9C, 0x00,
@@ -47,6 +57,7 @@ class GL9001FaucetSwitch : public PollingComponent, public switch_::Switch, publ
   void closeFaucet();
   void readFaucetStatus();
   bool parse_irrigation_status_data(uint8_t *value, uint16_t value_len);
+  void on_set_manual_open_duration(int hours, int minutes);
 };
 
 }  // namespace gl9001

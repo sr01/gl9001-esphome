@@ -3,6 +3,10 @@
 namespace esphome {
 namespace gl9001 {
 
+void GL9001FaucetSwitch::setup() {
+  register_service(&GL9001FaucetSwitch::on_set_manual_open_duration, "setManualOpenDuration", {"hours", "minutes"});
+}
+
 void GL9001FaucetSwitch::dump_config() {
   LOG_SWITCH("", "GL9001FaucetSwitch", this);
   ESP_LOGCONFIG(TAG, "  MAC address        : %s", this->parent()->address_str().c_str());
@@ -69,7 +73,7 @@ void GL9001FaucetSwitch::gattc_event_handler(esp_gattc_cb_event_t event, esp_gat
         break;
       if (param->read.status != ESP_GATT_OK) {
         ESP_LOGW(TAG, "[%s] Error reading char at handle %d, status=%d", this->get_name().c_str(), param->read.handle,
-                  param->read.status);
+                 param->read.status);
         break;
       }
       if (param->read.handle == this->irrigationStatusHandle) {
@@ -100,9 +104,7 @@ void GL9001FaucetSwitch::openFaucet() {
 
   ESP_LOGD(TAG, "[%s] send open faucet", this->get_name().c_str());
 
-  uint8_t hours = 0;    // TODO: move to config
-  uint8_t minutes = 5;  // TODO: move to config
-  uint8_t data[] = {0, 3, 0, hours, minutes, 0, 0};
+  uint8_t data[] = {0, 3, 0, this->manualOpenDuration.hours, this->manualOpenDuration.minutes, 0, 0};
 
   esp_err_t status =
       esp_ble_gattc_write_char(this->parent()->gattc_if, this->parent()->conn_id, this->irrigationControlHandle,
@@ -169,5 +171,13 @@ void GL9001FaucetSwitch::update() {
   this->readFaucetStatus();
 }
 
+void GL9001FaucetSwitch::on_set_manual_open_duration(int hours, int minutes) {
+  if (0 <= hours && hours <= 255 && 0 <= minutes && minutes <= 255) {
+    ESP_LOGD(TAG, "[%s] set manual open duration to: %02d:%02d", this->get_name().c_str(), hours, minutes);
+
+    this->manualOpenDuration.hours = (uint8_t) hours;
+    this->manualOpenDuration.minutes = (uint8_t) minutes;
+  }
+}
 }  // namespace gl9001
 }  // namespace esphome

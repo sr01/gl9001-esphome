@@ -82,8 +82,8 @@ text_sensor:
     lambda: |-
       auto timeSensor = new esphome::gl9001::GL9001TimeSensor();
       timeSensor->set_time_component(esptime);
-      timeSensor->set_update_interval(5000);
-      timeSensor->set_time_format("%02d:%02d:%02d");
+      timeSensor->set_update_interval(60000);
+      timeSensor->set_time_format("%02d:%02d");
       App.register_component(timeSensor);
       gl9001Client->register_ble_node(timeSensor);
       return {timeSensor};

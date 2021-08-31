@@ -33,7 +33,7 @@ class GL9001TimeSensor : public PollingComponent,
   uint16_t setTimeHandle;
 
  protected:
-  std::string empty_value = "";
+  std::string empty_value = "--:--:--";
   const char *timeFormat = "%02d:%02d:%02d";
   time::RealTimeClock *rtc = NULL;
 

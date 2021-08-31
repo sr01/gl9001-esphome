@@ -19,6 +19,7 @@ void GL9001OpenDurationSensor::gattc_event_handler(esp_gattc_cb_event_t event, e
     case ESP_GATTC_OPEN_EVT: {
       if (param->open.status == ESP_GATT_OK) {
         ESP_LOGI(TAG, "[%s] Connected successfully!", this->get_name().c_str());
+        this->publish_state(this->empty_value);
         break;
       }
       break;

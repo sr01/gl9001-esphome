@@ -43,11 +43,11 @@ void GL9001OpenDurationSensor::gattc_event_handler(esp_gattc_cb_event_t event, e
       }
 
       this->irrigationStatusHandle = chr1->handle;
-      this->node_state = espbt::ClientState::Established;
+      this->node_state = espbt::ClientState::ESTABLISHED;
       break;
     }
     case ESP_GATTC_READ_CHAR_EVT: {
-      if (param->read.conn_id != this->parent()->conn_id)
+      if (param->read.conn_id != this->parent()->get_conn_id())
         break;
       if (param->read.status != ESP_GATT_OK) {
         ESP_LOGW(TAG, "[%s] Error reading char at handle %d, status=%d", this->get_name().c_str(), param->read.handle,
@@ -70,7 +70,7 @@ void GL9001OpenDurationSensor::gattc_event_handler(esp_gattc_cb_event_t event, e
       break;
     }
     case ESP_GATTC_WRITE_CHAR_EVT: {
-      if (param->write.conn_id != this->parent()->conn_id)
+      if (param->write.conn_id != this->parent()->get_conn_id())
         break;
 
       if (param->write.status != ESP_GATT_OK) {
@@ -111,7 +111,7 @@ void GL9001OpenDurationSensor::update() {
     return;
   }
 
-  if (this->node_state != espbt::ClientState::Established) {
+  if (this->node_state != espbt::ClientState::ESTABLISHED) {
     ESP_LOGW(TAG, "[%s] Cannot poll, not connected", this->get_name().c_str());
     return;
   }
@@ -126,7 +126,7 @@ void GL9001OpenDurationSensor::update() {
 void GL9001OpenDurationSensor::readFaucetStatus() {
   this->heartBeat();
 
-  auto status = esp_ble_gattc_read_char(this->parent()->gattc_if, this->parent()->conn_id, this->irrigationStatusHandle,
+  auto status = esp_ble_gattc_read_char(this->parent()->get_gattc_if(), this->parent()->get_conn_id(), this->irrigationStatusHandle,
                                         ESP_GATT_AUTH_REQ_NONE);
 
   if (status) {

@@ -30,7 +30,7 @@ void GL9001ConnectionSensor::gattc_event_handler(esp_gattc_cb_event_t event, esp
       break;
     }
     case ESP_GATTC_SEARCH_CMPL_EVT: {
-      this->node_state = espbt::ClientState::Established;
+      this->node_state = espbt::ClientState::ESTABLISHED;
       break;
     }
     default:
@@ -43,7 +43,7 @@ void GL9001ConnectionSensor::update() {
     return;
   }
 
-  bool state = this->node_state == espbt::ClientState::Established;
+  bool state = this->node_state == espbt::ClientState::ESTABLISHED;
   publish_state(state);
 }
 

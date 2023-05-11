@@ -55,11 +55,11 @@ void GL9001TimeSensor::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_
 
       this->getTimeHandle = chr1->handle;
       this->setTimeHandle = chr2->handle;
-      this->node_state = espbt::ClientState::Established;
+      this->node_state = espbt::ClientState::ESTABLISHED;
       break;
     }
     case ESP_GATTC_READ_CHAR_EVT: {
-      if (param->read.conn_id != this->parent()->conn_id)
+      if (param->read.conn_id != this->parent()->get_conn_id())
         break;
       if (param->read.status != ESP_GATT_OK) {
         ESP_LOGW(TAG, "[%s] Error reading char at handle %d, status=%d", this->get_name().c_str(), param->read.handle,
@@ -73,7 +73,7 @@ void GL9001TimeSensor::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_
       break;
     }
     case ESP_GATTC_WRITE_CHAR_EVT: {
-      if (param->write.conn_id != this->parent()->conn_id)
+      if (param->write.conn_id != this->parent()->get_conn_id())
         break;
 
       if (param->write.status != ESP_GATT_OK) {
@@ -109,7 +109,7 @@ void GL9001TimeSensor::update() {
     return;
   }
 
-  if (this->node_state != espbt::ClientState::Established) {
+  if (this->node_state != espbt::ClientState::ESTABLISHED) {
     ESP_LOGW(TAG, "[%s] Cannot poll, not connected", this->get_name().c_str());
     return;
   }
@@ -120,7 +120,7 @@ void GL9001TimeSensor::update() {
 
   this->heartBeat();
 
-  auto status = esp_ble_gattc_read_char(this->parent()->gattc_if, this->parent()->conn_id, this->getTimeHandle,
+  auto status = esp_ble_gattc_read_char(this->parent()->get_gattc_if(), this->parent()->get_conn_id(), this->getTimeHandle,
                                         ESP_GATT_AUTH_REQ_NONE);
 
   if (status) {
@@ -133,7 +133,7 @@ void GL9001TimeSensor::update() {
 void GL9001TimeSensor::on_sync_time() {
   ESP_LOGD(TAG, "sync time");
 
-  if (this->node_state != espbt::ClientState::Established) {
+  if (this->node_state != espbt::ClientState::ESTABLISHED) {
     ESP_LOGW(TAG, "[%s] Cannot sync time, not connected", this->get_name().c_str());
     return;
   }
@@ -153,7 +153,7 @@ void GL9001TimeSensor::on_sync_time() {
       uint8_t data[] = {0, 0, 0, 0, hour, minute, second, day_of_week};
 
       esp_err_t status =
-          esp_ble_gattc_write_char(this->parent()->gattc_if, this->parent()->conn_id, this->setTimeHandle, sizeof(data),
+          esp_ble_gattc_write_char(this->parent()->get_gattc_if(), this->parent()->get_conn_id(), this->setTimeHandle, sizeof(data),
                                    data, ESP_GATT_WRITE_TYPE_RSP, ESP_GATT_AUTH_REQ_NONE);
       if (status) {
         ESP_LOGE(TAG, "[%s] set time failed, status=%d", this->get_name().c_str(), status);

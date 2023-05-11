@@ -1,4 +1,5 @@
 #include "gl9001_node.h"
+#include <esp_log.h>
 
 namespace esphome {
 namespace gl9001 {
@@ -37,7 +38,7 @@ void GL9001Node::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t g
 esp_err_t GL9001Node::heartBeat() {
   ESP_LOGD(TAG, "send heartBeat");
   uint8_t data[] = {1, 2};
-  esp_err_t status = esp_ble_gattc_write_char(this->parent()->gattc_if, this->parent()->conn_id, this->heartHandle,
+  esp_err_t status = esp_ble_gattc_write_char(this->parent()->get_gattc_if(), this->parent()->get_conn_id(), this->heartHandle,
                                               sizeof(data), data, ESP_GATT_WRITE_TYPE_RSP, ESP_GATT_AUTH_REQ_NONE);
   if (status) {
     ESP_LOGW(TAG, "heartBeat failed, status=%d", status);
